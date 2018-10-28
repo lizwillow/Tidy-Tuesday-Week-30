@@ -1,0 +1,184 @@
+---
+title: "#tidytuesday week 30: Horror Movies and Profit"
+author: "Elizabeth Eisenhauer"
+output: html_document
+---
+
+This is the code behind an analysis of the 538 "Horror Movies and Profit" dataset from the [#tidytuesday project](https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-10-23).
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning=FALSE,error=FALSE)
+
+library(tidyverse)
+library(scales)
+library(broom)
+library(ggthemes)
+library(plotly)
+
+theme_set(theme_light())
+```
+
+```{r, include=FALSE}
+movies <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-23/movie_profit.csv")
+
+movies$profit = movies$worldwide_gross-movies$production_budget
+movies$ROI = (movies$worldwide_gross-movies$production_budget)/movies$production_budget
+movies$release_date = as.Date(movies$release_date, "%m/%d/%Y")
+movies$release_year = format(movies$release_date,"%Y")
+
+movies_processed <- movies %>%
+  select(release_year,movie,production_budget,domestic_gross,worldwide_gross,distributor,mpaa_rating,genre, profit,ROI) %>%
+  arrange(desc(ROI))
+```
+
+## What movie categories have the highest return-on-investment?
+
+```{r}
+movies_processed %>%
+  mutate(movie = fct_reorder(movie, ROI)) %>% #mutate just changes the order in the plot, not the order of the data itself
+  head(10) %>%
+  ggplot(aes(movie, ROI, fill = genre)) +
+  geom_col() +
+  scale_y_continuous(labels = dollar_format()) +
+  coord_flip() +
+  labs(title = "What movies had the highest return on investment?",
+       subtitle = "(1936-2018)",
+       x = "",
+       y = "Return on Investment") 
+
+```
+
+## How many movies at least broke even?
+
+```{r}
+
+
+movies_processed %>%
+  filter(ROI >= 1,release_year>=2013,release_year<=2017) %>%
+  select(release_year,genre) %>%
+  as.data.frame(table()) %>%
+  arrange(desc(release_year)) %>%
+  ggplot(aes(x=release_year,fill=genre)) +
+  geom_bar() +
+  coord_flip() +
+  labs(title = "Of the movies that at least broke even, how many were horror?",
+       x = "Release Year",
+       y = "# that at least broke even")
+
+
+```
+
+
+
+
+## What is the ROI for each movie genre of movies released from 2013 to 2017?
+
+```{r}
+
+dat = movies_processed %>%
+ filter(release_year>=2013,release_year<=2017) %>%
+  mutate(genre = fct_reorder(genre, ROI))
+
+datsub = dat %>%
+  group_by(genre) %>%
+  top_n(3, ROI)
+
+dat %>%
+  ggplot(aes(genre, ROI, color = genre,text=movie),position='dodge') +
+  geom_boxplot() +
+  scale_y_continuous(labels = dollar_format()) +
+  expand_limits(y = 0) +
+  coord_flip() +
+  expand_limits(y = c(0, 70)) +
+  geom_text(data = datsub, aes(genre, ROI, label = movie), 
+            check_overlap = TRUE,
+            position = position_dodge(width = 0.75),
+            inherit.aes = TRUE,
+            size = 2.5, 
+            hjust = -0.2,
+            angle=0) +
+  theme_fivethirtyeight() +
+  theme(axis.title = element_text()) +
+  theme(text = element_text(size = 10)) +
+  guides(fill=FALSE) +
+  theme(legend.position = "none") +
+  labs(x = "", y = "Return on Investment",
+       title = "Return on Investment by Movie Genre (2013-2017)",
+       subtitle = "Return on Investment = (Worldwide Gross - Production Budget) / Production Budget")
+  
+  
+  ggsave("movies.png",width=7,height=4)
+
+```
+
+## Appendix
+
+```{r}
+
+g <- movies_processed %>%
+  ggplot(aes(release_year, ROI, color = genre, label = movie)) +
+  geom_point() +
+  geom_smooth(aes(group = 1), method = "lm") +
+  scale_y_continuous(labels = dollar_format()) +
+  expand_limits(y = 0) +
+  theme(text = element_text(size = 10),
+        axis.text.x = element_text(size=7,angle=75)) +
+  labs(title="Return on Investment over Time")
+
+
+ggplotly(g)
+```
+
+
+```{r}
+knitr::knit_exit()
+```
+
+Scrap work:
+
+
+```{r}
+library(plotly)
+ggplotly(gg,tooltip="text")
+
+  ?plot_ly
+
+dat<-movies_processed %>%
+  filter(release_year>=2010) %>%
+  mutate(genre = fct_reorder(genre, ROI))
+
+plot_ly(dat,
+  x=~ROI,y=~genre, type = "box", boxpoints = "all", jitter = 0.3,
+    pointpos = -1.8) %>% layout(hovermode = "closest") %>%
+  add_markers(data = dat, text = dat$movie)
+
+
+
+
+
+
+
+## Not run: 
+# simple example
+ggiris <- qplot(Petal.Width, Sepal.Length, data = iris, color = Species)
+ggplotly(ggiris)
+
+data(canada.cities, package = "maps")
+viz <- ggplot(canada.cities, aes(long, lat)) +
+  borders(regions = "canada") +
+  coord_equal() +
+  geom_point(aes(text = name, size = pop), colour = "red", alpha = 1/2)
+ggplotly(viz, tooltip = c("text", "size"))
+
+
+
+```
+
+
+
+
+
+
+
+
+
