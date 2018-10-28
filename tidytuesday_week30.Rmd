@@ -3,6 +3,7 @@ title: "#tidytuesday week 30: Horror Movies and Profit"
 author: "Elizabeth Eisenhauer"
 output: 
   html_document:
+    self_contained: false
     keep_md: true
 ---
 
@@ -141,9 +142,6 @@ Scrap work:
 
 ```{r}
 library(plotly)
-ggplotly(gg,tooltip="text")
-
-  ?plot_ly
 
 dat<-movies_processed %>%
   filter(release_year>=2010) %>%
