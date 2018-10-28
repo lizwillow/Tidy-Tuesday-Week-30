@@ -1,8 +1,9 @@
 ---
 title: "#tidytuesday week 30: Horror Movies and Profit"
 author: "Elizabeth Eisenhauer"
-output: github_document
-always_allow_html: yes
+output: 
+  html_document:
+    keep_md: true
 ---
 
 This is the code behind an analysis of the 538 "Horror Movies and Profit" dataset from the [#tidytuesday project](https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-10-23).
