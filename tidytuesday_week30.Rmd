@@ -107,7 +107,7 @@ dat %>%
        subtitle = "Return on Investment = (Worldwide Gross - Production Budget) / Production Budget")
   
   
-  ggsave("movies.png",width=7,height=4)
+ # ggsave("movies.png",width=7,height=4)
 
 ```
 
