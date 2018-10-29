@@ -1,2 +1,2 @@
-# Tidy-Tuesday-Week-30
-The Tidy Tuesday analysis, week 30
+# Tidy Tuesday
+Analyses of #tidytuesday datasets from https://github.com/rfordatascience/tidytuesday.
