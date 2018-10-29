@@ -1,0 +1,143 @@
+---
+title: "#TidyTuesday Week 31: "
+author: "Elizabeth Eisenhauer"
+date: "10/29/2018"
+output: html_document
+---
+
+This is the code behind an analysis of the "R and Package download stats" dataset from the [#tidytuesday project](https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-10-30).
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning=FALSE,error=FALSE)
+
+library(tidyverse)
+library(scales)
+library(broom)
+library(ggthemes)
+library(plotly)
+library(ggplot2)
+library(rworldmap)
+library(countrycode)
+library(plyr)
+
+theme_set(theme_light())
+```
+
+```{r, include=FALSE}
+rdown <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-30/r-downloads.csv")
+
+rdownyear <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-30/r_downloads_year.csv")
+
+rdown$region = countrycode(rdown$country, "iso2c", "country.name")
+rdownyear$region = countrycode(rdownyear$country, "iso2c", "country.name")
+
+rdownyear_processed <- rdown %>%
+  select(date,time,size,version,os,country,region,ip_id)
+```
+
+## What countries download R the most?
+
+```{r}
+
+map.world = map_data(map="world")
+
+## last Tidy Tuesday
+rdownyear_processed %>%
+  select(region,ip_id) %>%
+  unique() %>%
+  count('region') %>%
+  join(map.world,by='region') %>%
+  select(region,freq,long,lat) %>%
+  ggplot() +
+  theme(legend.position="none") +
+  geom_map(map=map.world, aes(map_id=region, x=long, y=lat, fill=freq)) +
+  scale_fill_gradient(low = "green", high = "brown3", guide = "colourbar") +
+  coord_equal()
+  
+
+
+gg <- ggplot()
+gg <- gg + theme(legend.position="none")
+gg <- gg + geom_map(data=map.world, map=map.world, aes(map_id=region, x=long, y=lat, fill=name_len))
+
+gg <- gg + scale_fill_gradient(low = "green", high = "brown3", guide = "colourbar")
+gg <- gg + coord_equal()
+gg
+  
+  
+  
+  mutate(movie = fct_reorder(movie, ROI)) %>% #mutate just changes the order in the plot, not the order of the data itself
+  head(10) %>%
+  ggplot(aes(movie, ROI, fill = genre)) +
+  geom_col() +
+  scale_y_continuous(labels = dollar_format()) +
+  coord_flip() +
+  labs(title = "What movies had the highest return on investment?",
+       subtitle = "(1936-2018)",
+       x = "",
+       y = "Return on Investment") 
+
+```
+
+## How many movies at least broke even?
+
+```{r}
+
+
+movies_processed %>%
+  filter(ROI >= 1,release_year>=2013,release_year<=2017) %>%
+  select(release_year,genre) %>%
+  as.data.frame(table()) %>%
+  arrange(desc(release_year)) %>%
+  ggplot(aes(x=release_year,fill=genre)) +
+  geom_bar() +
+  coord_flip() +
+  labs(title = "Of the movies that at least broke even, how many were horror?",
+       x = "Release Year",
+       y = "# that at least broke even")
+
+
+```
+
+
+
+
+## What is the ROI for each movie genre of movies released from 2013 to 2017?
+
+```{r}
+
+dat = movies_processed %>%
+ filter(release_year>=2013,release_year<=2017) %>%
+  mutate(genre = fct_reorder(genre, ROI))
+
+datsub = dat %>%
+  group_by(genre) %>%
+  top_n(3, ROI)
+
+dat %>%
+  ggplot(aes(genre, ROI, color = genre,text=movie),position='dodge') +
+  geom_boxplot() +
+  scale_y_continuous(labels = dollar_format()) +
+  expand_limits(y = 0) +
+  coord_flip() +
+  expand_limits(y = c(0, 70)) +
+  geom_text(data = datsub, aes(genre, ROI, label = movie), 
+            check_overlap = TRUE,
+            position = position_dodge(width = 0.75),
+            inherit.aes = TRUE,
+            size = 2.5, 
+            hjust = -0.2,
+            angle=0) +
+  theme_fivethirtyeight() +
+  theme(axis.title = element_text()) +
+  theme(text = element_text(size = 10)) +
+  guides(fill=FALSE) +
+  theme(legend.position = "none") +
+  labs(x = "", y = "Return on Investment",
+       title = "Return on Investment by Movie Genre (2013-2017)",
+       subtitle = "Return on Investment = (Worldwide Gross - Production Budget) / Production Budget")
+  
+  
+  ggsave("movies.png",width=7,height=4)
+
+```
