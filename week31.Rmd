@@ -8,7 +8,7 @@ output: html_document
 This is the code behind an analysis of the "R and Package download stats" dataset from the [#tidytuesday project](https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-10-30).
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE,warning=FALSE,error=FALSE)
+knitr::opts_chunk$set(echo = FALSE,warning=FALSE,error=FALSE,message=FALSE)
 
 library(tidyverse)
 library(scales)
@@ -20,10 +20,19 @@ library(rworldmap)
 library(countrycode)
 library(plyr)
 
-theme_set(theme_light())
+# Theme Edits
+map_theme = theme_fivethirtyeight() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.x=element_blank(),
+        panel.grid.major = element_blank())
+
 ```
 
-```{r, include=FALSE}
+```{r getdata, include=FALSE}
+# the tidytuesday data
 rdown <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-30/r-downloads.csv")
 
 rdownyear <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-30/r_downloads_year.csv")
@@ -31,113 +40,91 @@ rdownyear <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytue
 rdown$region = countrycode(rdown$country, "iso2c", "country.name")
 rdownyear$region = countrycode(rdownyear$country, "iso2c", "country.name")
 
-rdownyear_processed <- rdown %>%
+rdownyear_processed <- rdownyear %>%
   select(date,time,size,version,os,country,region,ip_id)
+
+#the map
+map.world = map_data(map="world")
+map.world$region[map.world$region=="USA"]<-"United States"
+map.world$region[map.world$region=="UK"]<-"United Kingdom"
 ```
 
 ## What countries download R the most?
 
 ```{r}
 
-map.world = map_data(map="world")
+## just on tidy tuesday
+rdown %>%
+  select(region,ip_id) %>%
+  unique() %>%
+  count('region') %>%
+  join(map.world,.,by='region') %>%
+  select(region,freq,long,lat) %>%
+  ggplot(aes(map_id=region, x=long, y=lat, fill=freq)) +
+  geom_map(map=map.world) +
+  scale_fill_gradient(low = "red", high = "yellow", guide = "colourbar") +
+  coord_equal() +
+  labs(title = "How many people downloaded R on #TidyTuesday of week 30?",
+       subtitle = "(October 23, 2018)",
+       caption = "source: cran-logs.rstudio.com") +
+  map_theme +
+  guides(fill=guide_colourbar(title="", barwidth = 15, barheight = 0.5)) +
+  theme(plot.title = element_text(size=15))
 
-## last Tidy Tuesday
+ggsave("week31.1.png")
+
+## all last year
 rdownyear_processed %>%
   select(region,ip_id) %>%
   unique() %>%
   count('region') %>%
-  join(map.world,by='region') %>%
+  join(map.world,.,by='region') %>%
   select(region,freq,long,lat) %>%
-  ggplot() +
-  theme(legend.position="none") +
-  geom_map(map=map.world, aes(map_id=region, x=long, y=lat, fill=freq)) +
-  scale_fill_gradient(low = "green", high = "brown3", guide = "colourbar") +
-  coord_equal()
-  
+  ggplot(aes(map_id=region, x=long, y=lat, fill=freq)) +
+  geom_map(map=map.world) +
+  scale_fill_gradient(low = "red", high = "yellow", guide = "colourbar") +
+  coord_equal() +
+  labs(title = "How many people download R around the world?",
+       subtitle = "(October 20, 2017 - October 20, 2018)",
+       caption = "source: cran-logs.rstudio.com") +
+  map_theme +
+  guides(fill=guide_colourbar(title="", barwidth = 15, barheight = 0.5))
 
-
-gg <- ggplot()
-gg <- gg + theme(legend.position="none")
-gg <- gg + geom_map(data=map.world, map=map.world, aes(map_id=region, x=long, y=lat, fill=name_len))
-
-gg <- gg + scale_fill_gradient(low = "green", high = "brown3", guide = "colourbar")
-gg <- gg + coord_equal()
-gg
-  
-  
-  
-  mutate(movie = fct_reorder(movie, ROI)) %>% #mutate just changes the order in the plot, not the order of the data itself
-  head(10) %>%
-  ggplot(aes(movie, ROI, fill = genre)) +
-  geom_col() +
-  scale_y_continuous(labels = dollar_format()) +
-  coord_flip() +
-  labs(title = "What movies had the highest return on investment?",
-       subtitle = "(1936-2018)",
-       x = "",
-       y = "Return on Investment") 
-
+ggsave("week31.2.png")
 ```
 
-## How many movies at least broke even?
+## What countries downloaded R the most per capita?
+
+Population data provided by World Development Indicators  (https://data.worldbank.org/indicator/SP.POP.TOTL), last updated 10/18/18.
 
 ```{r}
+## get country population data
+library(readr)
+pop <- read_csv("~/Documents/Git/TidyTuesday/pop.csv")
+pop$region = countrycode(pop$`Country Code`, "iso3c", "country.name")
 
+gg = rdownyear_processed %>%
+  select(region,ip_id) %>%
+  unique() %>%
+  count('region') %>%
+  join(map.world,.,by='region') %>%
+  join(.,pop,by='region') %>%
+  select(region,freq,long,lat,Population2017) %>%
+  mutate(percapita = 10000*(freq / Population2017))
 
-movies_processed %>%
-  filter(ROI >= 1,release_year>=2013,release_year<=2017) %>%
-  select(release_year,genre) %>%
-  as.data.frame(table()) %>%
-  arrange(desc(release_year)) %>%
-  ggplot(aes(x=release_year,fill=genre)) +
-  geom_bar() +
-  coord_flip() +
-  labs(title = "Of the movies that at least broke even, how many were horror?",
-       x = "Release Year",
-       y = "# that at least broke even")
+ggplot(gg,aes(map_id=region, x=long, y=lat, fill=percapita)) +
+  geom_map(map=map.world) +
+  scale_fill_gradient(low = "red", high = "yellow", guide = "colourbar") +
+  coord_equal() +
+  labs(title = "What countries downloaded R the most per capita?",
+       subtitle = "(October 20, 2017 - October 20, 2018)",
+       caption = "Sources: cran-logs.rstudio.com and worldbank.org") +
+  guides(fill=guide_colourbar(title="Downloads per 10,000 people:", barwidth = 15, barheight = 1)) +
+  map_theme
 
+ggsave("week31.3.png")
 
+#just curious
+head(gg[gg$region=='Iceland',])[1,]
 ```
 
-
-
-
-## What is the ROI for each movie genre of movies released from 2013 to 2017?
-
-```{r}
-
-dat = movies_processed %>%
- filter(release_year>=2013,release_year<=2017) %>%
-  mutate(genre = fct_reorder(genre, ROI))
-
-datsub = dat %>%
-  group_by(genre) %>%
-  top_n(3, ROI)
-
-dat %>%
-  ggplot(aes(genre, ROI, color = genre,text=movie),position='dodge') +
-  geom_boxplot() +
-  scale_y_continuous(labels = dollar_format()) +
-  expand_limits(y = 0) +
-  coord_flip() +
-  expand_limits(y = c(0, 70)) +
-  geom_text(data = datsub, aes(genre, ROI, label = movie), 
-            check_overlap = TRUE,
-            position = position_dodge(width = 0.75),
-            inherit.aes = TRUE,
-            size = 2.5, 
-            hjust = -0.2,
-            angle=0) +
-  theme_fivethirtyeight() +
-  theme(axis.title = element_text()) +
-  theme(text = element_text(size = 10)) +
-  guides(fill=FALSE) +
-  theme(legend.position = "none") +
-  labs(x = "", y = "Return on Investment",
-       title = "Return on Investment by Movie Genre (2013-2017)",
-       subtitle = "Return on Investment = (Worldwide Gross - Production Budget) / Production Budget")
-  
-  
-  ggsave("movies.png",width=7,height=4)
-
-```
