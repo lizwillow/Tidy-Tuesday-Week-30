@@ -21,8 +21,6 @@ library(countrycode)
 library(plyr)
 
 # Theme Edits
-my_font <- "Comfortaa"
-
 map_theme = theme_fivethirtyeight() +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
