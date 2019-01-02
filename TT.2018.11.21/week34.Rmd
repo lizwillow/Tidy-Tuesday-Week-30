@@ -1,0 +1,88 @@
+---
+title: "#TidyTuesday Week 34: "
+author: "Elizabeth Eisenhauer"
+date: "10/29/2018"
+output: 
+  html_document:
+    keep_md: TRUE
+---
+
+
+This is the code behind an analysis of the "R and Package download stats" dataset from the [#tidytuesday project](https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-10-30). 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning=FALSE,error=FALSE,message=FALSE)
+
+library(tidyverse)
+
+library(gganimate)
+library(rworldmap)
+library(ggrepel)
+library(mapproj)
+
+```
+
+```{r getdata, include=FALSE}
+# the tidytuesday data
+library(remotes)
+install_github("CaRdiffR/tdor")
+library("tdor")
+
+#the map
+map.states = map_data(map="state")
+```
+
+```{r world_map, warning=FALSE}
+tproc<-tdor %>%
+  filter(Year==2018,Country=="USA",Name!="Dr Laura Masi")
+
+state <- ggplot() +
+  borders("state", colour = "white", fill = "lightblue") +
+  coord_map(projection = "mercator", xlim = c(-129, -48), ylim = c(22, 52)) +
+  theme_void()+
+  theme(plot.background = element_rect(fill="pink",colour="white"),
+        text = element_text(colour="white"),
+        title = element_text(colour="white",face="bold"),
+        plot.title = element_text(size=13),
+        plot.margin = margin(6, 6, 6, 6))
+
+map <- state +
+  geom_point(aes(x = Longitude, y = Latitude, label=Name),
+             data = tproc,col="darkslateblue",alpha=0.5) +
+  geom_label(aes(x = Longitude, y = Latitude, label=Name),
+             data = tproc,col="darkslateblue",hjust=0.3,vjust=-0.7) +
+  labs(title="Transgender people who committed suicide or were killed so far in 2018",
+       subtitle=paste("Date: ",format("{frame_time}", format="%B %d %Y"),sep=""),
+       caption = "TDoR data from Cardiff RUser Group") +
+  transition_events(start=tproc$Date,end=tproc$Date+10,enter_length = as.difftime(0, unit="days"),exit_length = as.difftime(15, unit="days"))+
+  shadow_mark(alpha=0.1)
+
+animate(map)
+anim_save("week34_anim.gif")
+```
+
+## No animation
+
+```{r}
+state <- ggplot() +
+  borders("state", colour = "white", fill = "lightblue") +
+  coord_map(projection = "mercator", xlim = c(-129, -48), ylim = c(22, 52)) +
+  theme_void()+
+  theme(plot.background = element_rect(fill="pink",colour="white"),
+        text = element_text(colour="white"),
+        title = element_text(colour="white",face="bold"),
+        plot.title = element_text(size=13),
+        plot.margin = margin(6, 6, 6, 6))
+
+map <- state +
+  geom_point(aes(x = Longitude, y = Latitude, label=Name),
+             data = tproc,col="darkslateblue",alpha=0.5) +
+  geom_label_repel(aes(x = Longitude, y = Latitude, label=Name),
+             data = tproc,col="darkslateblue") +
+  labs(title="Transgender people who committed suicide or were killed so far in 2018",
+       caption = "TDoR data from Cardiff RUser Group")
+
+map
+ggsave("week34_map.png")
+```
+
