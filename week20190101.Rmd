@@ -243,7 +243,86 @@ tidytuesday %>%
 
 ```
 
+Whose #rstats tweets were retweeted the most in 2018 on average?
 
+```{r}
+
+toppeople <- rstats %>% 
+  select(screen_name,created_at,followers_count,is_retweet,favorite_count, retweet_count,text) %>%
+  filter(created_at >= as.Date("2018-01-01"),
+         is_retweet == FALSE)  %>%
+  group_by(screen_name) %>% 
+  summarise(mean_retweets = mean(retweet_count),
+            n = n()) %>%
+  arrange(desc(mean_retweets)) %>%
+  head(7)
+
+toppeople %>% 
+  mutate(screen_name = fct_reorder(screen_name,mean_retweets)) %>%
+  ggplot(aes(y = mean_retweets, x = screen_name, fill=n)) +
+  geom_col() +
+  coord_flip() +
+  theme_light() +
+  labs(title = "Whose #rstats tweets were retweeted most on average in 2018?",
+       y = "Mean number of retweets of #rstats tweets in 2018",
+       x = "",
+       caption = "(Data from the rtweet package)") +
+  theme(legend.position = "none",
+        text = element_text(family = "Andale Mono"),
+        plot.margin = unit(c(.5,1,.5,0),"cm"),
+        axis.text = element_text(size = 10)) +
+  geom_text(aes(label = paste(n,c(rep("tweet",2),rep("tweets",3),rep("tweet",2)))), 
+            position = position_stack(vjust = 0.5),
+            family = "Andale Mono",
+            size = 4,
+            col="white") +
+  scale_fill_gradient(low = myColors[1], high = myColors[5])
+
+ggsave(filename = "rstatsavgretweets.png", path = here("Week20190101_files"),width = 8.5, height = 4)
+
+```
+
+Whose #rstats tweets were liked the most in 2018?
+
+```{r}
+
+library(ghibli)
+
+toppeople <- rstats %>% 
+  select(screen_name,created_at,followers_count,is_retweet,favorite_count, retweet_count,text) %>%
+  filter(created_at >= as.Date("2018-01-01"),
+         is_retweet == FALSE)  %>%
+  group_by(screen_name) %>%
+  summarise(mean_favs = mean(favorite_count),
+            n=n()) %>%
+  arrange(desc(mean_favs)) %>%
+  head(7)
+
+toppeople %>% 
+  mutate(screen_name = fct_reorder(screen_name,mean_favs)) %>%
+  ggplot(aes(y = mean_favs, x = screen_name, fill=n)) +
+  geom_col() +
+  coord_flip() +
+  theme_light() +
+  labs(title = "Whose #rstats tweets were liked most on average in 2018?",
+       y = "Mean number of favorites for #rstats tweets in 2018",
+       x = "",
+       caption = "(Data from the rtweet package)") +
+  theme(legend.position = "none",
+        text = element_text(family = "Andale Mono"),
+        plot.margin = unit(c(.5,1,.5,0),"cm"),
+        axis.text = element_text(size = 10)) +
+  geom_text(aes(label = paste(n,c(rep("tweet",3),"tweets","tweet",rep("tweets",2)))), 
+            position = position_stack(vjust = 0.5),
+            family = "Andale Mono",
+            size = 4,
+            col="white") +
+  scale_fill_gradient(low = myColors[1], high = myColors[5])
+
+ggsave(filename = "rstatsavglikes.png", path = here("Week20190101_files"),width = 8.5, height = 4)
+
+
+```
 
 
 
