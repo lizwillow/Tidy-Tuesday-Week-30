@@ -1,12 +1,8 @@
 ---
-title: 'First #TidyTuesday of 2019'
-author: "Elizabeth Eisenhauer"
-date: "12/31/2018"
-output: 
-  html_document:
-    keep_md: TRUE
+output: rmarkdown::github_document
 ---
 
+### #First #TidyTuesday of 2019
 
 This is the code behind an analysis of the "#rstats and #TidyTuesday Tweets from rtweet" dataset from the [#tidytuesday project](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-01-01).
 
@@ -76,7 +72,7 @@ toppeople %>%
             size = 2,
             col="white")
 
-ggsave(filename = "rstatsretweets.png", path = here("Week20190101_files"),width = 7, height = 4)
+#ggsave(filename = "rstatsretweets.png", path = here("Week20190101_files"),width = 7, height = 4)
 
 ```
 
@@ -116,7 +112,7 @@ toppeople %>%
             size = 2,
             col="white")
 
-ggsave(filename = "rstatslikes.png", path = here("Week20190101_files"),width = 7, height = 4)
+#ggsave(filename = "rstatslikes.png", path = here("Week20190101_files"),width = 7, height = 4)
 
 
 ```
@@ -144,7 +140,7 @@ topliked %>%
        x = "") +
   theme(legend.position = "none")
 
-ggsave(filename="rstats.png",path=here("Week20190101_files"),width = 9, height = 6)
+#ggsave(filename="rstats.png",path=here("Week20190101_files"),width = 9, height = 6)
 ```
 
 Who had the most liked and retweeted #tidytuesday tweets of 2018?
@@ -170,7 +166,7 @@ topliked %>%
        x = "") +
   theme(legend.position = "none")
 
-ggsave(filename="tidytuesday.png",path=here("Week20190101_files"),width = 9, height = 6)
+#ggsave(filename="tidytuesday.png",path=here("Week20190101_files"),width = 9, height = 6)
 ```
 
 What were the most retweeted and favorited #tidytuesday tweets of 2018?
@@ -207,7 +203,7 @@ toptweet %>%
         title=element_text(size=8),
         text=element_text(family = "Tahoma")) 
 
-ggsave(filename="tidytuesdaytweets.png",path=here("Week20190101_files"),width = 8, height = 4)
+#ggsave(filename="tidytuesdaytweets.png",path=here("Week20190101_files"),width = 8, height = 4)
 
 ```
 
@@ -262,7 +258,7 @@ toppeople %>%
             col="white") +
   scale_fill_gradient(low = myColors[1], high = myColors[5])
 
-ggsave(filename = "rstatsavgretweets.png", path = here("Week20190101_files"),width = 8.5, height = 4)
+#ggsave(filename = "rstatsavgretweets.png", path = here("Week20190101_files"),width = 8.5, height = 4)
 
 ```
 
@@ -305,7 +301,7 @@ toppeople %>%
             size = 3,
             col="white")
 
-ggsave(filename = "rstatsavglikes.png", path = here("Week20190101_files"),width = 8.5, height = 4)
+#ggsave(filename = "rstatsavglikes.png", path = here("Week20190101_files"),width = 8.5, height = 4)
 
 
 ```
@@ -344,6 +340,6 @@ toptweet %>%
         title=element_text(size=8),
         text=element_text(family = "Tahoma")) 
 
-ggsave(filename="tidytuesdaytweets.png",path=here("Week20190101_files"),width = 8, height = 4)
+#ggsave(filename="tidytuesdaytweets.png",path=here("Week20190101_files"),width = 8, height = 4)
 
 ```
