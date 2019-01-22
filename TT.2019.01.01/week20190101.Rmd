@@ -232,7 +232,7 @@ toppeople <- rstats %>%
   group_by(screen_name) %>% 
   summarise(mean_retweets = mean(retweet_count),
             n = n()) %>%
-  filter(n>9) %>%
+  filter(n>19) %>%
   arrange(desc(mean_retweets)) %>%
   head(7)
 
@@ -275,7 +275,7 @@ toppeople <- rstats %>%
   group_by(screen_name) %>%
   summarise(mean_favs = mean(favorite_count),
             n=n()) %>%
-  filter(n>9) %>%
+  filter(n>19) %>%
   arrange(desc(mean_favs)) %>%
   head(7)
 

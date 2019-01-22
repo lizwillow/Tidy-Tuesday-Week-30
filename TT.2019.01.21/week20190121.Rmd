@@ -1,0 +1,195 @@
+---
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggthemes)
+library(ghibli)
+```
+
+This is the code behind an analysis of the "Incarceration Trends" dataset from the [#tidytuesday project](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-01-22).
+
+```{r}
+pretrial_pop <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-22/pretrial_population.csv")
+
+prison_pop <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-22/prison_population.csv") %>%
+  mutate(type = "prison")
+  
+
+pre <- pretrial_pop %>%
+  rename("in_pop" = "pretrial_population") %>%
+  mutate(type = "pretrial")
+
+pris <- prison_pop %>%
+  rename("in_pop" = "prison_population") %>%
+  mutate(type = "prison")
+
+pop <- rbind(pre, pris)
+```
+
+Let's look at PA.
+
+```{r}
+pa <- pretrial_pop %>%
+  filter(state == "PA",
+         pop_category == "Total") %>%
+  na.omit() %>% 
+  group_by(year, urbanicity) %>%
+  summarize(rate_per_100000 = sum(pretrial_population)/sum(population) * 100000,
+            sum_pop = sum(population)) %>% 
+  mutate(place = "PA")
+
+pa %>%
+  ggplot(aes(x = year, y = rate_per_100000, col = urbanicity, size = sum_pop)) +
+  geom_path(lineend="round",linejoin="mitre") +
+  theme_light() +
+  scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:5])+ 
+  theme(legend.key.size = unit(12,"pt")) + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+
+```
+
+
+```{r}
+pa_both <- pop %>%
+  filter(state == "PA",
+         pop_category == "Total") %>%
+  na.omit() %>% 
+  group_by(year, urbanicity, type) %>%
+  summarize(rate_per_100000 = sum(in_pop)/sum(population) * 100000,
+            sum_pop = sum(population))
+
+pa_both %>%
+  ggplot(aes(x = year, y = rate_per_100000, col = urbanicity, alpha = type)) +
+  geom_path(size = 2) +
+  theme_light() +
+  scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:5])+ 
+  theme(legend.key.size = unit(12,"pt"))
+
+```
+
+
+ 
+Average trend over the US.
+
+```{r}
+us <- pretrial_pop %>%
+  filter(pop_category == "Total") %>%
+  na.omit() %>% 
+  group_by(year, urbanicity) %>% 
+  summarize(rate_per_100000 = sum(pretrial_population)/sum(population) * 100000,
+            sum_pop = sum(population)) %>%
+  mutate(place = "US")
+
+us %>%
+  ggplot(aes(x = year, y = rate_per_100000, col = urbanicity, size = sum_pop)) +
+  geom_path(lineend="round",linejoin="mitre") +
+  theme_light() +
+  scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:5]) + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+
+```
+
+
+```{r}
+urban_pa <- pretrial_pop %>%
+  filter(county_name %in% c("Philadelphia County","Allegheny County"),
+         pop_category == "Total") %>%
+  na.omit() %>% 
+  group_by(year, urbanicity, county_name) %>%
+  summarize(rate_per_100000 = sum(pretrial_population)/sum(population) * 100000,
+            sum_pop = sum(population)) %>% 
+  mutate(place = county_name)
+
+
+rbind(urban_pa, us) %>%
+  filter(urbanicity == "urban") %>%
+  ggplot(aes(x = year, y = rate_per_100000, col = place)) +
+  geom_line(size = 2) +
+  theme_light() +
+  scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:4])+ 
+  theme(legend.key.size = unit(12,"pt")) +
+  labs(title = "Comparing pretrial jail rates for urban Pennsylvania to urban US average")
+```
+
+
+
+I want to see the highest
+
+```{r}
+
+pretrial_pop %>%
+  filter(pop_category == "Total") %>%
+  na.omit() %>%
+  group_by(county_name, year) %>% 
+  summarize(rate_per_100000 = sum(pretrial_population)/sum(population) * 100000,
+            sum_pop = sum(population)) %>%
+  ungroup() %>%
+  arrange(desc(rate_per_100000)) %>%
+  head(10)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+Let's look at pretrial and prison.
+
+```{r}
+
+pa_pretopris <- pop %>%
+  filter(state == "PA",
+         pop_category == "Total") %>%
+  na.omit() %>% 
+  group_by(year, type) %>%
+  summarize(rate_per_100000 = sum(in_pop)/sum(population) * 100000,
+            sum_pop = sum(population)) %>% 
+  mutate(place = "PA")
+  
+us_pretopris <- pop %>%
+  filter(pop_category == "Total") %>%
+  na.omit() %>% 
+  group_by(year, type) %>% 
+  summarize(rate_per_100000 = sum(in_pop)/sum(population) * 100000,
+            sum_pop = sum(population)) %>%
+  mutate(place = "US")
+  
+rbind(pa_pretopris, us_pretopris) %>%
+  ggplot(aes(x = year, y = rate_per_100000, col = place, alpha = type)) +
+  geom_line(size = 2) +
+  theme_light() +
+  scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:3])+ 
+  theme(legend.key.size = unit(12,"pt")) +
+  scale_alpha_discrete(range = c(1, 0.3))
+
+  
+```
+
+And NJ.
+
+```{r}
+pretrial_pop %>%
+  filter(state == "NJ",
+         pop_category == "Total") %>%
+  na.omit() %>% 
+  group_by(year, urbanicity, pop_category) %>% 
+  summarize(rate_per_100000 = sum(pretrial_population)/sum(population) * 100000,
+            sum_pop = sum(population)) %>%
+  ggplot(aes(x = year, y = rate_per_100000, col = urbanicity, size = sum_pop)) +
+  geom_path(lineend="round",linejoin="mitre") +
+  theme_light() +
+  scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[3:5]) + 
+  guides(colour = guide_legend(override.aes = list(size = 2)))
+
+```
