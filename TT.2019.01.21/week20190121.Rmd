@@ -15,20 +15,73 @@ This is the code behind an analysis of the "Incarceration Trends" dataset from t
 ```{r}
 pretrial_pop <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-22/pretrial_population.csv")
 
-prison_pop <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-22/prison_population.csv") %>%
-  mutate(type = "prison")
-  
-
-pre <- pretrial_pop %>%
-  rename("in_pop" = "pretrial_population") %>%
-  mutate(type = "pretrial")
-
-pris <- prison_pop %>%
-  rename("in_pop" = "prison_population") %>%
-  mutate(type = "prison")
-
-pop <- rbind(pre, pris)
+prison_pop <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-22/prison_population.csv")
 ```
+
+
+```{r}
+
+top_states <- pretrial_pop %>%
+  filter(pop_category == "Total",
+         year == 2015) %>% 
+  na.omit() %>%
+  group_by(state) %>%
+  summarize(rate_per_100000 = sum(pretrial_population)/sum(population) * 100000) %>%
+  arrange(rate_per_100000) %>%
+  head(5) %>%
+  select(state)
+  
+  
+pretrial_pop %>%
+  filter(state %in% as.vector(top_states$state),
+         pop_category == "Total",
+         year >= 1990) %>% 
+  group_by(year, state) %>%
+  na.omit() %>%
+  summarize(rate_per_100000 = sum(pretrial_population)/sum(population) * 100000) %>%
+  ggplot(aes(x = year, y = rate_per_100000, col = state)) +
+  geom_line() +
+  theme_light() +
+  theme(legend.key.size = unit(12,"pt"))
+
+  
+  
+```
+
+
+
+Specific states
+
+```{r}
+
+pretrial_pop %>%
+  filter(state == c("UT", "KY"),
+         pop_category == "Total",
+         year >= 1990) %>% 
+  group_by(year, state) %>%
+  na.omit() %>%
+  summarize(rate_per_100000 = sum(pretrial_population)/sum(population) * 100000) %>%
+  ggplot(aes(x = year, y = rate_per_100000, col = state)) +
+  geom_line() +
+  theme_light() +
+  theme(legend.key.size = unit(12,"pt"))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Let's look at PA.
 
@@ -39,7 +92,8 @@ pa <- pretrial_pop %>%
   na.omit() %>% 
   group_by(year, urbanicity) %>%
   summarize(rate_per_100000 = sum(pretrial_population)/sum(population) * 100000,
-            sum_pop = sum(population)) %>% 
+            sum_pop = sum(population),
+            sum_pretrial = sum(pretrial_population)) %>% 
   mutate(place = "PA")
 
 pa %>%
@@ -48,12 +102,33 @@ pa %>%
   theme_light() +
   scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:5])+ 
   theme(legend.key.size = unit(12,"pt")) + 
-  guides(colour = guide_legend(override.aes = list(size = 2)))
+  guides(colour = guide_legend(override.aes = list(size = 2))) +
+  theme_fivethirtyeight()
+
+pa %>%
+  ggplot(aes(x = year, y = sum_pretrial)) +
+  geom_area(aes(fill = urbanicity), position = "stack") +
+  theme_light() +
+  scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:5])+ 
+  theme(legend.key.size = unit(12,"pt")) + 
+  guides(colour = guide_legend(override.aes = list(size = 2))) +
+  theme_fivethirtyeight()
 
 ```
 
 
 ```{r}
+
+pre <- pretrial_pop %>%
+  rename("in_pop" = "pretrial_population") %>%
+  mutate(type = "pretrial")
+
+pris <- prison_pop %>%
+  rename("in_pop" = "prison_population") %>%
+  mutate(type = "prison")
+
+pop <- rbind(pre, pris)
+
 pa_both <- pop %>%
   filter(state == "PA",
          pop_category == "Total") %>%
@@ -89,7 +164,7 @@ us %>%
   geom_path(lineend="round",linejoin="mitre") +
   theme_light() +
   scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:5]) + 
-  guides(colour = guide_legend(override.aes = list(size = 2)))
+  guides(colour = guide_legend(override.aes = list(size = 2))) 
 
 ```
 
@@ -113,7 +188,31 @@ rbind(urban_pa, us) %>%
   scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:4])+ 
   theme(legend.key.size = unit(12,"pt")) +
   labs(title = "Comparing pretrial jail rates for urban Pennsylvania to urban US average")
+
+#without us avg
+
+rbind(urban_pa) %>%
+  filter(urbanicity == "urban") %>%
+  ggplot(aes(x = year, y = rate_per_100000, col = place, size = sum_pop)) +
+  geom_path(lineend="round",linejoin="mitre") +
+  scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[3:4]) +
+  labs(title = "Pre-trial detention rate (per 100,000) in urban Pennsylvania") +
+  theme_fivethirtyeight() +
+  guides(color= FALSE,
+         size = guide_legend(title = "County population:")) + 
+  theme(legend.key.size = unit(2,"pt"),
+        legend.text = element_text(size = 9),
+        legend.title = element_text(size = 10),
+        plot.title = element_text(size = 14.5)) +
+  annotate("text", x = 1977, y = 240, label = "Philadelphia County", size = 4) + 
+  annotate("segment", x = 1978, xend = 1977, y = 210, yend = 144) +
+  annotate("text", x = 1997, y = 30, label = "Allegheny County", size = 4) + 
+  annotate("segment", x = 1996, xend = 1995, y = 50, yend = 120)
+
+
 ```
+
+
 
 
 
