@@ -187,6 +187,9 @@ pa <- pretrial_pop %>%
             sum_pretrial = sum(pretrial_population)) %>% 
   mutate(place = "Pennsylvania")
 
+
+
+
 rbind(us,pa) %>%
   ggplot(aes(x = year, y = rate_per_100000, col = urbanicity)) +
   geom_path(lineend="round", linejoin="mitre", size = 1.5) +
@@ -297,6 +300,51 @@ rbind(urban_pa) %>%
 ggsave(here("TT.2019.01.21", "urban_pa_pretrial.pdf"), width = 6.5, height = 4.2)
 
   
+```
+
+
+
+```{r}
+pa %>%
+  ggplot(aes(x = year, y = rate_per_100000, col = urbanicity, size = sum_pop)) +
+  geom_path(lineend="round",linejoin="mitre") +
+  scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:5]) + 
+  guides(colour = guide_legend(override.aes = list(size = 2))) +
+  theme_fivethirtyeight() +
+  labs(title = "Pre-trial detention rate (per 100,000) in Pennsylvania",
+       subtitle = "Line thickness is proportional to total population.",
+       caption = "Data from The Vera Institute")  +
+  theme(legend.key.size = unit(10,"pt"),
+        legend.text = element_text(size = 9),
+        legend.position = "bottom",
+        legend.title = element_blank(),
+        legend.spacing.x = unit(15,"pt"),
+        legend.spacing.y = unit(5, "pt"),
+        legend.margin = margin(t = 0, b = 0),
+        plot.title = element_text(size = 14.5)) +
+  scale_size_continuous(labels = comma)
+
+us %>%
+  ggplot(aes(x = year, y = rate_per_100000, col = urbanicity, size = sum_pop)) +
+  geom_path(lineend="round",linejoin="mitre") +
+  scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:5]) + 
+  guides(colour = guide_legend(override.aes = list(size = 2))) +
+  theme_fivethirtyeight() +
+  labs(title = "Pre-trial detention rate (per 100,000) in the United States",
+       subtitle = "Line thickness is proportional to total population.",
+       caption = "Data from The Vera Institute")  +
+  theme(legend.key.size = unit(10,"pt"),
+        legend.text = element_text(size = 9),
+        legend.position = "bottom",
+        legend.title = element_blank(),
+        legend.spacing.x = unit(15,"pt"),
+        legend.spacing.y = unit(5, "pt"),
+        legend.margin = margin(t = 0, b = 0),
+        plot.title = element_text(size = 14.5)) +
+  scale_size_continuous(labels = comma)
+
+ggsave(here("TT.2019.01.21", "us_sep.png"), width = 6.5, height = 4.2)
+
 ```
 
 
@@ -486,24 +534,7 @@ us %>%
         plot.title = element_text(size = 14.5))
 
 
-pa %>%
-  ggplot(aes(x = year, y = rate_per_100000, col = urbanicity, size = sum_pop)) +
-  geom_path(lineend="round",linejoin="mitre") +
-  scale_color_manual(values = ghibli_palette("KikiMedium",n=5)[2:5]) + 
-  guides(colour = guide_legend(override.aes = list(size = 2))) +
-  theme_fivethirtyeight() +
-  labs(title = "Pre-trial detention rate (per 100,000) in Pennsylvania",
-       subtitle = "Line thickness is proportional to total population.",
-       caption = "Data from The Vera Institute")  +
-  theme(legend.key.size = unit(10,"pt"),
-        legend.text = element_text(size = 9),
-        legend.position = "bottom",
-        legend.title = element_blank(),
-        legend.spacing.x = unit(15,"pt"),
-        legend.spacing.y = unit(5, "pt"),
-        legend.margin = margin(t = 0, b = 0),
-        plot.title = element_text(size = 14.5)) +
-  scale_size_continuous(labels = comma)
+
 
 ```
 
