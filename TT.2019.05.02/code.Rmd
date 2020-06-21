@@ -1,0 +1,49 @@
+---
+title: "week20190501"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+```{r}
+bird_collisions <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-04-30/bird_collisions.csv") %>%
+  dplyr::mutate(sci_name = paste(genus, species))
+mp_light <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-04-30/mp_light.csv")
+```
+
+Look at common names
+
+```{r}
+
+library("taxize")
+
+species <- unique(bird_collisions$sci_name)
+
+uids <- get_uid(species)
+
+# keep only uids which you have in the database
+uids.found <- as.uid(uids[!is.na(uids)][1:3])
+# keep only species names  corresponding to your ids
+species.found <- species[!is.na(uids)]
+
+common.names <- sci2comm(species.found)
+names(common.names) <- species.found
+
+common.names
+
+```
+
+
+
+
+
+
+
+
+
+
+
